@@ -1,0 +1,36 @@
+metadata:
+  name: Network Compliance Policy
+  description: Policies to ensure network devices are compliant with standards and best practices.
+  version: "1.0.0"
+  author: Wael Shahadeh
+
+rules:
+  - id: NTP-001
+    description: Checks that the config contains the string ntp server 10.0.0.100
+    pattern: "ntp server 10.0.0.100"
+    type: config_contains
+    match_type: exact
+    severity: high
+  - id: TELNET-001
+    description: Checks that the config does not contain transport input telnet
+    pattern: "transport input.*telnet"
+    type: config_not_contains
+    match_type: regex
+    severity: critical
+  - id: SNMP-001
+    description: Checks that the config does not contain snmp-server community public or snmp-server community private
+    pattern: "snmp-server community (public|private)"
+    type: config_not_contains
+    match_type: regex
+    severity: critical
+  - id: BANNER-001
+    description: Checks that the config contains banner login
+    pattern: "banner login"
+    type: config_contains
+    match_type: exact
+    severity: medium
+  - id: INT-DESC-001
+    description: Checks that all interfaces have a description configured
+    type: every_interface_has
+    field: description
+    severity: low

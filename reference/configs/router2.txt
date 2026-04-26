@@ -1,0 +1,44 @@
+!
+! Cisco IOS Configuration
+! Device: router2
+! Role: core
+! Site: branch1
+!
+hostname router2
+!
+banner login ^
+Authorized users only.
+^
+!
+snmp-server community private RW
+snmp-server community NetMon-r0 RO
+!
+ip ssh version 2
+!
+interface Loopback0
+ description Core Loopback
+ ip address 10.255.0.2 255.255.255.255
+!
+interface GigabitEthernet0/0
+ description Uplink to router1
+ ip address 10.10.1.2 255.255.255.0
+ no shutdown
+!
+interface GigabitEthernet0/1
+ ip address 10.20.1.1 255.255.255.0
+ no shutdown
+!
+interface GigabitEthernet0/2
+ description Link to switch1
+ ip address 10.20.99.254 255.255.255.0
+ no shutdown
+!
+router bgp 65001
+ neighbor 10.10.1.1 remote-as 65000
+ neighbor 10.10.1.1 description Peering with router1
+!
+line vty 0 4
+ transport input ssh
+ login local
+!
+end

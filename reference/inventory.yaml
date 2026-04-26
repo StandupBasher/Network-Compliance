@@ -1,0 +1,25 @@
+# Inventory file for network devices
+
+# the general syntax of a YAML file is:
+# key: value
+# in this case, we have a key called "devices" and its value is a list of items
+# the list is indicated by a "-" at the beginning of each item
+# each item can have its own attributes, which are also key-value pairs
+# never use tabs for indentation in YAML, always use spaces
+
+# devices: is a key to wrap together a list
+devices:
+  # each item starts with a "- " to indicate it's part of the list
+  - name: router1
+    # each item under the item is treated as an attribute of that item
+    role: edge
+    site: DC
+    config_path: configs/router1.txt
+  - name: switch1
+    role: core
+    site: branch1
+    config_path: configs/switch1.txt
+  - name: router2
+    role: core
+    site: branch1
+    config_path: configs/router2.txt

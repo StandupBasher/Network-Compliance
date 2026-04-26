@@ -1,0 +1,48 @@
+!
+! Cisco IOS Configuration
+! Device: router1
+! Role: edge
+! Site: DC
+!
+hostname router1
+!
+banner login ^
+WARNING: Authorized access only. All activity is monitored and logged.
+Unauthorized access is prohibited and will be prosecuted.
+^
+!
+ntp server 10.0.0.100
+ntp server 10.0.0.101
+!
+snmp-server community NetMon-r0 RO
+snmp-server location DC-Rack-12
+snmp-server contact awesomesauce@example.com
+!
+ip ssh version 2
+!
+interface Loopback0
+ description Management Loopback
+ ip address 10.255.0.1 255.255.255.255
+!
+interface GigabitEthernet0/0
+ description Uplink to ISP-A
+ ip address 203.0.113.2 255.255.255.252
+ ip access-group WAN_IN in
+ no shutdown
+!
+interface GigabitEthernet0/1
+ description LAN to dc-core-01
+ ip address 10.10.1.1 255.255.255.0
+ no shutdown
+!
+interface GigabitEthernet0/2
+ description Backup link to ISP-B
+ ip address 198.51.100.2 255.255.255.252
+ ip access-group WAN_IN in
+ no shutdown
+!
+line vty 0 4
+ transport input ssh
+ login local
+!
+end
