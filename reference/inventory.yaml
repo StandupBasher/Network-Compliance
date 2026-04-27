@@ -14,12 +14,12 @@ devices:
     # each item under the item is treated as an attribute of that item
     role: edge
     site: DC
-    config_path: configs/router1.txt
-  - name: switch1
-    role: core
-    site: branch1
-    config_path: configs/switch1.txt
+    config_path: reference/configs/router1.txt
   - name: router2
     role: core
     site: branch1
-    config_path: configs/router2.txt
+    config_path: reference/configs/router2.txt
+  - name: switch1
+    role: core
+    site: branch1
+    config_path: reference/configs/switch1.txt
