@@ -27,6 +27,13 @@ def load_config(device):
         data = f.read()
     return data
 
+def search_config(config, pattern, match_type="exact"):
+    #Search the config for a pattern, returns TRUE if found.
+    if match_type == "regex":
+        return re.search(pattern, config) is not None
+    else:
+        return pattern in config
+
 def rule_applied(rule, device):
     "Returns True if the fule should run against the device"
     "A rule with no 'applies_to' field runs globally."
@@ -44,11 +51,7 @@ def check_config_contains(rule, config):
     "PASS if pattern is found in the config, FAIL if not found"
     pattern = rule["pattern"]
     match_type = rule.get("match_type", "exact")
-
-    if match_type == "regex":
-        found = re.search(pattern, config) is not None
-    else:
-        found = pattern in config
+    found = search_config(config, pattern, match_type)
 
     if found:
         return ("PASS", f"Found pattern: {pattern}")
@@ -59,11 +62,7 @@ def check_config_not_contains(rule, config):
     "PASS if pattern is not found in the config, FAIL if found"
     pattern = rule["pattern"]
     match_type = rule.get("match_type", "exact")
-
-    if match_type == "regex":
-        found = re.search(pattern, config) is not None
-    else:
-        found = pattern in config
+    found = search_config(config, pattern, match_type)
 
     if found:
         return ("FAIL", f"Bad pattern found: {pattern}")
@@ -159,7 +158,7 @@ def run_audit(inventory, policy):
     return results
 
 status_styles = {
-    "PASS": "greem",
+    "PASS": "green",
     "FAIL": "red",
     "N/A": "dim",
     "ERROR": "yellow",
