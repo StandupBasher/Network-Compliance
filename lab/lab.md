@@ -229,3 +229,90 @@ If your code gets a `KeyError` with `devices`, it means your YAML doesn't have a
 3. What does `load_inventory()` return `data["devices"]` instead of just `data`?
 
 ---
+
+# Module 2: Loading Device Configs
+
+**Objectives:**
+
+- Read raw text from files
+- Understannd when to use raw file reading vs structured parsing
+- How to handle missing files
+- Pass and use dict data inside a function
+
+**Background**
+
+Module 1 used `yaml.safe_load()` because YAML is structured data. It has keys, lists, and nested objects that cleanly work with Python dicts and lists. A device configuration is different in a sense that it is just text. There is no formal structure with plain text files. Using `yaml.safe_load()` on a non-YAML formatted file would either fail or produce garbage data.
+
+Python has a tool built in for raw text files. `f.read()` returns the entire file's contents as a string, which is what we want. We can then search through that string to find whichever specific data to check for compliance patterns.
+
+**Looking at `reference/config/router1.txt`:**
+
+```
+!
+! Cisco IOS Configuration
+! Device: router1
+! Role: edge
+! Site: DC
+!
+hostname router1
+!
+banner login ^
+WARNING: Authorized access only. All activity is monitored and logged.
+Unauthorized access is prohibited and will be prosecuted.
+^
+!
+ntp server 10.0.0.100
+ntp server 10.0.0.101
+!
+snmp-server community NetMon-r0 RO
+snmp-server location DC-Rack-12
+snmp-server contact awesomesauce@example.com
+!
+ip ssh version 2
+!
+interface Loopback0
+ description Management Loopback
+ ip address 10.255.0.1 255.255.255.255
+!
+```
+
+This is plain text. There are no keys or structures to grab from, just what you would see if you run `show running-config` on a real Cisco device. We want to load it into our program with a function so we can search it later.
+
+**Writing `load_config()`**
+
+Open `starter/audit.py` and  find `load_config()`:
+
+```python
+def load_config(device):
+    #Module 2: Read a devices config file as a string
+    pass
+```
+
+Notice how there is a differnce to this function than what we saw in `load_inventory`. We are now using a parameter called `device` instead of `path`. This is because `load_config` receives a whole device dict, which was loaded in from `load_inventory` from Module 1, and the path lives inside that dict.
+
+We will also build `load_config` in three steps.
+
+---
+
+**Step 1: Get the path from the device dict**
+
+When `load_config` is called later, it will pass a device dict that looks like this:
+
+```python
+{"name": "router1", "role": "edge", "site": "DC", "config_path": "reference/configs/router1.txt"}
+```
+
+You can reach a value in the dict by writing `dict_name["key"]`. SO if your dict is named `device` and you want the value at `"config_path"`, you would write `device["config_path"]`.
+
+**Try it yourself!** Inside `load_config`, write a `with` block that opens the file at the device's config path and names the open file `f`. Use the same pattern as what we learned from Module 1.
+
+**Solution:**
+
+```python
+load_config(device):
+    with open(device["config_path"]) as f:
+      pass
+```
+
+---
+
