@@ -55,6 +55,6 @@ In the context of this lab, we are using YAML for the policy list for network de
 
 **YAML File walkthrough**
 
-YAML follows simple rules. A colon ":" represents a list wrapper, so "Device:" would make "Device" the key that you can grab, and ":" wraps everything beneath that so you can access it by calling for "Device". within "Device", you can have individual items within, creating a list with a dash, "-". Think of "Device" as a book and everything underneath that being a chapter. In the context of this lab, we can create "- name: <name>" to start a list for whichevery name you choose. You can add subparameters by just doing "<parameter>:". Notice how there is not a second "-", because that would mean there is a new list instead of being a parameter. You should use spaces instead of indents when it comes to YAML syntax.
+YAML follows simple rules. A colon ":" represents a list wrapper, so "Device:" would make "Device" the key that you can grab, and ":" wraps everything beneath that so you can access it by calling for "Device". within "Device", you can have individual items within, creating a list with a dash, "-". Think of "Device" as a book and everything underneath that being a chapter. In the context of this lab, we can create "- name: name" to start a list for whichevery name you choose. You can add subparameters by just doing "parameter:". Notice how there is not a second "-", because that would mean there is a new list instead of being a parameter. You should use spaces instead of indents when it comes to YAML syntax.
 
 .
