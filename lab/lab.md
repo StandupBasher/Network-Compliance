@@ -538,3 +538,97 @@ def search_config(config, pattern, match_type="exact"):
 
 ---
 
+**Step 2: Handle regex matching**
+
+When `match_type` is `"regex"`, we use `re.search()`. The function returns a match object on hit, `None` on miss. We want a boolean, so compare to `None`:
+
+```python
+re.search(pattern, config) is not None
+```
+
+This ends up being `True` if there is a match, `False` if not.
+
+Make sure `import re` is at the top of your file. Then add an `else` branch for the regex case.
+
+**Try it yourself!** Add an `else` clause to `search_config`. Inside it, return whether `re.search(pattern, config)` is not `None`.
+
+**Solution**
+```python
+def search_config(config, pattern, match_type="exact"):
+  if match_type == "exact":
+    return pattern in config
+  else:
+    return re.search(pattern, config) is not None
+```
+
+`search_config` is complete!
+
+---
+
+**Testing `search_config`**
+
+Update your test block with this and run it:
+
+```python
+if __name__ == "__main__":
+    inventory = load_inventory("starter/inventory.yaml")
+    config = load_config(inventory[0])  # router1's config
+
+    # Exact match — should return True
+    print("NTP server present:", search_config(config, "ntp server 10.0.0.100"))
+
+    # Exact match — should return False
+    print("Public SNMP present:", search_config(config, "snmp-server community public"))
+
+    # Regex match — catches both 'transport input telnet' and 'transport input ssh telnet'
+    print("Telnet enabled:", search_config(config, "transport input.*telnet", match_type="regex"))
+```
+
+The expected output should be:
+
+```bash
+NTP server present: True
+Public SNMP present: False
+Telnet enabled: False
+```
+
+---
+
+A common mistake is when you are working with special characters in regex, like `~!@#$%^&*()` for example. If your pattern contains a special character and you mean it literally, you have to escape it with a backslash. Another common mistake is case sensitivity. You can get around this by sanitizing the input with the `.lower()` function. 
+
+So if:
+
+```python
+data = "Hello World"
+print(data)
+```
+
+Your output would be:
+
+```bash
+Hello World
+```
+
+If you want to make everything lowercase, you can do this:
+
+```python
+data = "Hello World"
+lowercasedData = data.lower()
+print(lowercasedData)
+```
+
+Your output would be:
+
+```bash
+hello world
+```
+
+---
+
+This function is important because it is reused in Module 4 with `check_config_contains` and `check_config_not_contains` The rule handlers will need this exact logic. Solve the search issue once so it doesn't need to be rebuilt for every function.
+
+---
+
+**Module 3 Question**
+
+1. Why does `search_config` accept a `match_type`  parameter instead of always using regex?
