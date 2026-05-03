@@ -60,14 +60,16 @@ In the context of this lab, we are using YAML for the policy list for network de
 
 
 2. **Lists** are written with a dash for each item
-```yaml
+
+```
    interfaces:
      - eth0
      - eth1
 ```
 
 3. **Nested data** uses indentation. Items under a parent must be indented the same amount. Always use spaces and never use tabs:
-```yaml
+
+```
    router1:
      ip: 10.0.0.1
      role: edge
@@ -75,7 +77,7 @@ In the context of this lab, we are using YAML for the policy list for network de
 
 **Looking at 'reference/inventory.yaml':**
 
-```yaml
+```
 devices:
   - name: router1
     role: edge
