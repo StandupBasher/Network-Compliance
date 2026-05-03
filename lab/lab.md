@@ -448,3 +448,93 @@ def load_config(device):
 3. If you wanted to read the config line-by-line, what would you use instead of `f.read()`? When might it be useful?
 
 ---
+
+# Module 3: Searching Configs for Patterns
+
+**Objectives:**
+
+- Use Pythons `in` operator for substring matching
+- Understand when substring matching isn't enough
+- Use the `re` module for regular expression matching
+- Write a reusable helper function
+
+**Background**
+
+In Module 2 we loaded a device's config as a single string. Now we need to search that string and find out if specific patterns appear in it. This is part of the core of our audit engine.
+
+1. `in` checks if one string is a substring of another. `in` is exact match only.
+2. Regular Expressions (regex) is a flexible pattern-matching langugage. Regex allows you to match patterns like "the word telnet appears anywhere on a line starting with transport input".
+
+**How does `in` work?**
+
+The `in` operator is built into Python and is used between two strings. After comparing the strings, it gives a boolean output, being `True` or `False`. It outputs `True` if the left of the string is in the right of the string. For example:
+
+```python
+"hello" in "hello world" #True
+"world" in "hello world" #True
+"goodbye" in "hello world" #false
+"Hello" in "hello world" #false
+```
+
+It is case sensitive. This is fine for our goal of Cisco auditing, because Cisco syntax is consistent.
+
+**Regular Expression (regex)**
+
+Sometimes substring matching isn't flexible enough. Lets say there is a rule such as `telnet must not be enabled on VTY lines.` The config might say:
+
+- `transport input telnet` telnet only
+- `transport input ssh telnet` both telnet and ssh
+- `transport input telnet ssh` both but different order
+
+These three strings are all violations of that rule. A substring check for `transport input telnet` would catch the first two strings, but miss the third. A regex like `transport input.*telnet` catches all three because `.*` means "any characters in between"
+
+Some important regex syntax to know:
+
+- `.` matches any single character
+- `.*` matches zero or more of nay character
+- `(option1|option2)` matches either option (alternation)
+- `^` matches the start of a line
+- `$` natches the end of a line
+
+Python's `re` module provides the regex functions we need. We will use `re.search()`, which scans the string for the first match and returns a match object.
+
+```python
+import re
+
+re.search("hello", "hello world") #true
+re.search("missing", "hello world") #false
+re.search("transport input,*telnet", "transport input ssh telnet") #true
+```
+
+**Writing `search_config()`**
+
+Open `starter/audit.py` and find `search_config()`:
+
+```python
+def search_config(config, pattern, match_type="exact"):
+    #Module 3: Search a config for a pattern. Return True if found
+    pass
+```
+
+Notice how the function has a third parameter, `match_type="exact"`. This means that it will default to exact searches if the user omits that parameter. If the user does need regex, they can select that and the function will still function properly. THis ensures the function works for both simple and complex string searches.
+
+We will build `search_config()` in two steps.
+
+---
+
+**Step 1: Handle exact matching**
+
+When `match_type` is `"exact"`, we use `in`. This would return `True` if `pattern` is in `config`, and `False` if not.
+
+**Try it yourself!** Inside `search_config`, write an `if` statement that checks `match_type`. If it's `"exact"`, return whether `pattern` is in `config`.
+
+**Solution**
+
+```python
+def search_config(config, pattern, match_type="exact"):
+  if match_type == "exact":
+    return pattern in config
+```
+
+---
+
