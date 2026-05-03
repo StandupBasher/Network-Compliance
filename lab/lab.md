@@ -25,7 +25,7 @@ The architecture diagram can be found in ../report/architecture.png
     - Once Git is installed, restart Visual Studio Code.
     - On the welcome page of Visual Studio Code, there will be the option to clone a repository. Click that, sign into GitHub (or make an account), and paste the URL of this repository into the search bar and press enter to clone (making a copy) of this repository for you to own locally on your device. Save into whichever folder of choice.
  
-- This program and lab uses Python 3.14.4, which you can download [here](https://www.python.org/downloads/).
+- This program and lab uses Python 3.10 or later, which you can download [here](https://www.python.org/downloads/).
   - Ensure that when you are going through the installer, you select the " Add to Path " option.
   - Once Python is installed, restart Visual Studio Code.
   - On the top panel of Visual Studio Code, there will be a terminal option.
@@ -42,7 +42,8 @@ Congratulations! You are now ready to code in Python and learn from this lab!
 
 - Understand YAML basics
 - Use yaml.safe_load
-- Write your first Python function
+- Write your first Python function with help
+- Write your second Python Function on your own
 - Work with dicts and lists
 
 **Background**
@@ -56,12 +57,12 @@ In the context of this lab, we are using YAML for the policy list for network de
 **YAML has three structural rules:**
 
 1. **Key-value pairs** use a colon followed by a space:
-    'name: router1'
+    `name: router1`
 
 
 2. **Lists** are written with a dash for each item
 
-```
+```yaml
    interfaces:
      - eth0
      - eth1
@@ -69,15 +70,15 @@ In the context of this lab, we are using YAML for the policy list for network de
 
 3. **Nested data** uses indentation. Items under a parent must be indented the same amount. Always use spaces and never use tabs:
 
-```
+```yaml
    router1:
      ip: 10.0.0.1
      role: edge
 ```
 
-**Looking at 'reference/inventory.yaml':**
+**Looking at `reference/inventory.yaml`:**
 
-```
+```yaml
 devices:
   - name: router1
     role: edge
@@ -93,9 +94,90 @@ devices:
     config_path: reference/configs/switch1.txt
 ```
 
-Notice the structure of inventory.yaml. A top key is called 'devices', whose value is a list, which is every item starting with '-'. Each device has four fields:
-- 'name' - Identifier used in reports
-- 'role' - 'core' or 'edge', used later for rule scoping
-- 'site' - The physical location, also used for rule scoping
-- 'config_path' - The relative path to the device's config file
+Notice the structure of inventory.yaml. A top key is called `devices`, whose value is a list, which is every item starting with `-`. Each device has four fields:
+- `name` - Identifier used in reports
+- `role` - `core` or `edge`, used later for rule scoping
+- `site` - The physical location, also used for rule scoping
+- `config_path` - The relative path to the device`s config file
 
+**Writing your first Python function!**
+
+Open `starter/audit.py`. You`ll see this in the first function:
+
+```python
+def load_inventory(path):
+    #Module 1: Load device inventory from YAML.
+    #Open the file, parse YAML, return the devices list.
+    pass
+```
+
+`def` means to define. We are "defining" a function called `load_inventory` for us to use in our program. Inside the paranthesis, we wrote `path`. This is just a placeholder variable that we can input into our function and manipulate. `pass` means to do nothing. It is so we can make this empty function without Python failing. It will be replaced by actual code.
+
+Each step will have instructions, a description of the goal, and a framework. Try to complete each step on your own. The solution would be right below if you get stuck.
+
+There is not a one answer solution for coding 99% of the time! If your function doesn`t look identical to the solution but is fully operational, that`s good!
+
+---
+
+**Step 1: Safely opening the file**
+
+Python opens files with the `open()` function. The issue is, leaving files open and not in use can cause a resource leak, leading to performance issues. The solution is simple! Python has a `with` statement, which handles opening and closing automatically:
+
+```python
+with open(<path>) as <variable>:
+  # code that uses the file, we can use pass as a placeholder
+  pass
+```
+
+**Try it yourself!** Inside the `load_inventory` function, write a with block that opens the inventory file at `path` and names the opened file as `f`. You don`t need to put stuff inside the block yet.
+
+**Solution**
+```python
+with open(path) as f:
+  pass
+```
+
+---
+
+**Step 2: YAML parsing**
+
+The pyyaml library has a `yaml.safe_load()` function built in. This opens a YAML file and returns its contents as objects that Python can understand, such as dicts, lists, strings, and numbers.
+
+**Try it yourself!** Inside your `with` block, store the results of `f` into a variable called `data` using `yaml.safe_load()`. You can get rid of the `pass`.
+
+**Solution**
+
+```python
+with open(path) as f:
+  data = yaml.safe_load(f)
+```
+
+---
+
+**Step 3: Return a device list**
+
+`data` now holds parsed YAML. Looking at inventory.yaml, its structure is `{"devices": [...]}`. The list of devices is under the `devices` key.
+
+Lets introduce the `return` concept in Python. `return` takes the output of a function and moves that data out of the function and into the rest of your code. A variable is a name that points to a specific spot in memory. 
+
+**Question:** Should the function return `data`, which is the whole parsed YAML, or `data["devices"]`? Why?
+
+**Answer:** The function should output `data["devices"]` because the caller of `load_inventory` only cares about the device list. They don`t need to know that there is a `devices` key wrapping it. Returning the list directly hides that detail.
+
+**Try it yourself!** Add a `return` statement that gives you back just the lists of devices.
+
+```python
+with open(path) as f:
+  data = yaml.safe_load(f)
+  return data["devices"]
+```
+
+That is `load_inventory` complete! 
+
+---
+
+**Now build `load_policy`!**
+
+Using what we learned so far, build `load_policy` so that it reads policy.yaml safely and outputs the needed data!
+
+Hint: `load_policy` should output the full parsed YAML dict, not just a subkey! The caller needs both metadata and rules.
