@@ -316,3 +316,135 @@ load_config(device):
 
 ---
 
+**Step 2: Read the file's contents**
+
+Python has a build function, `f.read()`, which returns the entire file as a single string. We are using that instead of `yaml.safe_load()` because we are reading an unstructured, regular plain text file.
+
+**Try it yourself!** Inside your `with` block, store the results of `f.read()` in a variable named `data`..
+
+```python
+load_config(device):
+  with open(device["config_path"]) as f:
+    data = f.read()
+```
+
+**Step 3: Returning the contents**
+
+We now want to get the config text from `load_config`. Return `data`.
+
+**Try it yourself!** Add a `return statement`
+
+**Solution**
+
+```python
+load_config(device):
+  with open(device["config_path"]) as f:
+    data = f.read()
+  return data
+```
+
+The `load_config` is now complete! 
+
+---
+
+**Testing `load_config`**
+
+Update your text block of `starter/audit.py`:
+
+```python
+if __name__ == "__main__":
+    inventory = load_inventory("starter/inventory.yaml")
+    first_device = inventory[0]
+    config = load_config(first_device)
+    print(f"Config for {first_device['name']}: {len(config)} characters")
+    print("First 200 chars:")
+    print(config[:200])
+```
+
+We are doing two special things with this test:
+
+- `inventory[0]` grabs the first item from the device list. Python counting starts at `0` instead of `1`.
+- `config[:200]` is string slicing. It grabs the first 200 characters of the string. This is useful for previewing a file without outputting its entire contents.
+
+Run the project the same way we did for Module 1 and you shuold see:
+
+```bash
+Config for router1: 961 characters
+First 200 chars:
+!
+! Cisco IOS Configuration
+! Device: router1
+! Role: edge
+! Site: DC
+!
+hostname router1
+!
+banner login ^
+WARNING: Authorized access only. All activity is monitored and logged.
+```
+
+---
+
+What happens if someone removes `router1.txt` and you run the script? Try it out! Rename `router1.txt` to `router1_old.txt` to simulate it being removed and run the script.
+
+You will see:
+
+```bash
+FileNotFoundError: [Errno 2] No such file or directory: 'starter/configs/router1.txt'
+```
+
+The script crashed! In a real audit, one device with a missing config should not kill the entire audit. We would instead want to record the error and keep going.
+
+Python provides `try/except` for these type of situations:
+
+```python
+try:
+  # Code that has the possibility of failing
+  something_risky()
+else SomeErrorType:
+  # Instructions if it fails
+  # error_handler()
+```
+
+We won't add error handling to `load_config` itself, which would complicate the function. Instead, we will add it to our `run_audit` function later, where the error context would matter more.
+
+Rename `router1_old.txt` back to `router1.txt` and confirm the script works again.
+
+---
+
+A common mistake is passing the wrong data type. `load_config` expects a dict, not a string path. If you accidentally call `load_config("configs/router1.txt")`, Python will try to look up `"config_path"` inside the string `"configs/router1.txt"`, which will fail.
+
+Another common mistake is using `yaml.safe_load()` on a config file. The config files aren't YAML, so they won't parse properly.
+
+**A note on using this program in production**
+
+This lab assumes you would have a config file in the correct directory. In a production enviornment, you would pull the configuration over SSH, using another Pyton library like Netmiko. This is beyond the scope of this lab, but is important to mention. The rest of the audit engine does not care about where the config file comes from, so long as it gets its data.
+
+Here is a rough idea of what `load_config` would look like in production. Don't write this in the lab, it is just to represent the usage of Netmiko.
+
+```python
+from netmiko import ConnectHandler
+
+def load_config(device):
+  connection = ConnectHandler(
+    device_type="cisco_ios",
+    host=device["host"],
+    username=device["username"],
+    password=device["password"],
+  )
+  config = connection.send_command("show running-config")
+  connection.disconnect()
+  return config
+```
+
+---
+
+**Some final questions for Module 2**
+
+1. Why does `load_config` use `f.read()` instead of `yaml.safe_load()`? What would happen if you used `yaml.safe_load()` on a Cisco config file?
+
+2. The function takes a `device` dict, not a path string. Why is that a better design instead of just passing the path?
+
+3. If you wanted to read the config line-by-line, what would you use instead of `f.read()`? When might it be useful?
+
+---
