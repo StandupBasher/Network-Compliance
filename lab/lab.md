@@ -13,8 +13,8 @@ The architecture diagram can be found in ../report/architecture.png
 
 # Module 0: Setup and Prerequisites
 
-- You would need an IDE of your choosing. An IDE is a piece of software that allows you to write, test, and debug code. I recommend Visual Studio Code, which you can download [here](https://code.visualstudio.com/).
-  - There are several extensions which make coding in Python more friendly. Press Ctrl (or Command in macOS) + shift + x to open the extension menu.
+- You would need an Integrated Development Enviornment (IDE) of your choosing. An IDE is a piece of software that allows you to write, test, and debug code. I recommend Visual Studio Code, which you can download [here](https://code.visualstudio.com/).
+  - There are several extensions which make coding in Python within VSCode for this lab more friendly. Press Ctrl (or Command in macOS) + shift + x to open the extension menu.
     - Gitlens
     - indent-rainbow
     - Python
@@ -29,8 +29,8 @@ The architecture diagram can be found in ../report/architecture.png
   - Ensure that when you are going through the installer, you select the " Add to Path " option.
   - Once Python is installed, restart Visual Studio Code.
   - On the top panel of Visual Studio Code, there will be a terminal option.
-    - Open a terminal and type pip install -r requirements.txt
-    - What this does is open requirements.txt and installs any external libraries this program uses. This lab in particular uses pyyaml and rich, which allow us to read and utilize files in a YAML format and have an elegant terminal output.
+    - Open a terminal and type `pip install -r requirements.txt`
+    - This opens requirements.txt and installs any external libraries this program uses. This lab in particular uses pyyaml and rich, which allow us to read and utilize files in a YAML format and have an elegant terminal output.
 
 Congratulations! You are now ready to code in Python and learn from this lab!
 
@@ -181,3 +181,51 @@ That is `load_inventory` complete!
 Using what we learned so far, build `load_policy` so that it reads policy.yaml safely and outputs the needed data!
 
 Hint: `load_policy` should output the full parsed YAML dict, not just a subkey! The caller needs both metadata and rules.
+
+**Testing the function**
+
+Add a test block at the bottom 'starter/audit.py':
+
+```python
+if __name__ == "__main__":
+    inventory = load_inventory("starter/inventory.yaml")
+    print(f"Loaded {len(inventory)} devices")
+    for device in inventory:
+        print(f"  - {device['name']} ({device['role']}) at {device['site']}")
+```
+
+Now run it from the project root or Visual Studio Code terminal:
+
+```python
+python starter/audit.py
+```
+
+You should see:
+
+```
+Loaded 3 devices
+  - router1 (edge) at DC
+  - switch1 (core) at branch1
+  - router2 (core) at branch1
+```
+
+If this appears in the terminal, your function works. If you see an error, check:
+- Did you save `audit.py` after editing?
+- Are you running from project root, and not inside `starter/`?
+- Did `pip install -r requirements.txt` complete successfully?
+
+Some common mistakes are using tabs instead of spaces in YAML for indentation. If you use tabs, you'll confuse the parsing. 
+
+If your code gets a `KeyError` with `devices`, it means your YAML doesn't have a top-level named `devices:` key.
+
+---
+
+**Final Tasks for Module 1:**
+
+1. Add a fourth device named `firewall1` to `starter/inventory.yaml` with `role: edge` amd `site: DC`. What does your test output show now?
+
+2. What's the difference between `yaml.safe_load()` and `yaml.load()`? Why should you always use `safe_load`?
+
+3. What does `load_inventory()` return `data["devices"]` instead of just `data`?
+
+---
