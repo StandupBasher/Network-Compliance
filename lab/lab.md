@@ -1354,3 +1354,53 @@ from rich.table import Table
 We'll build the function in five steps.
 
 ---
+
+**Step 1: Print the report header**
+
+Start by creating a `Console` and printing a header showing the policy's metadata (name, version, author).
+
+The policy dict from `load_policy` has a `metadata` sub dict with these fields. Access them as `policy["metadata"]["name"]`
+
+**Try it yourself!** Inside `print_report`, create a `Console` named `console`. Print a bold header like `"Network Compliance Audit Report"`, then print the policy name and version on one line, then the author on another.
+
+**Solution**
+
+```python
+def print_report(results, policy):
+    console = Console()
+
+    meta = policy["metadata"]
+    console.print()
+    console.print("[bold]Network Compliance Audit Report[/bold]")
+    console.print(f"Policy: {meta['name']} v{meta['version']}")
+    console.print(f"Author: {meta['author']}")
+    console.print()
+```
+
+The empty `console.print()` calls add blank lines for spacing.
+
+---
+
+**Step 2: Build the table structure**
+
+Create a `Table` with five columns, `Device`, `Rule ID`, `Severity`, `Status`, and `Reason`.
+
+The `add_column` method accepts options. `style="cyan"` colors the entire column. `no_wrap=True` keeps short fields from line wrapping poorly.
+
+**Try it yourself** Create a table named `table` with five columns. Make the Device column cyan and prevent wrapping on the first four columns
+
+**Solution:**
+
+```python
+table = Table(show_lines=False)
+table.add_column("Device", style="cyan", no_wrap=True)
+table.add_column("Rule ID", no_wrap=True)
+table.add_column("Severity", no_wrap=True)
+table.add_column("Status", no_wrap=True)
+table.add_column("Reason")
+```
+
+`show_lines=False` makes a cleaner table without horizontal lines between every row.
+
+---
+
