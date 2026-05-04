@@ -632,3 +632,42 @@ This function is important because it is reused in Module 4 with `check_config_c
 **Module 3 Question**
 
 1. Why does `search_config` accept a `match_type`  parameter instead of always using regex?
+
+---
+
+# Module 4: The Engine
+
+**Objectives:**
+
+- Build the rule filter (`rule_applies`)
+- Write three rule handler functions
+- Build a Cisco style config parser
+- Use a dispatch table to route rules to their handlers
+- Understand why dispatch tables beat long if/elif/else chains
+
+**Background**
+
+This is the heart of the audit tool. We have devices (Module 1), configs (Module 2), and a way to search those configs (Module 3). We will now build the audit engine that takes a rule from `policy.yaml`, decides whether it applies to a given device, and runs the right check.
+
+A rule looks like this:
+
+```yaml
+- id: NTP-001
+  description: NTP server must be configured
+  type: config_contains
+  pattern: "ntp server 10.0.0.100"
+  match_type: exact
+  severity: high
+```
+
+Different rules need different evaluation logic. A `config_contains` rule searches for a pattern. A `config_not_contains` rule searches for the absence of a pattern. An `check_every_int` rule parses interface blocks and checks each one. The engine has to dispatch to the right logic based on the rule's `type` field.
+
+We'll build it in five pieces:
+
+1. `rule_applies` Checks if a rule applies to a device
+2. `check_config_contains` Handles must contain rules
+3. `check_config_not_contains` Handles must not contain rules
+4. `parse_interfaces` and `check_every_int` Interface checks
+5. The dispatch table and `evaluate_rule` Putting the pieces together
+
+---
