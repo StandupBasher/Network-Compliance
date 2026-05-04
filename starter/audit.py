@@ -42,6 +42,10 @@ def check_every_int(rule, config):
     #Module 4: PASS if every interface block has the required field
     pass
 
+def parse_interfaces(config):
+    #Module 4: Parse Cisco config into a dict of interface blocks
+    pass
+
 rule_handler = {
     #Module 4: Map rule type strings to handler fuctions
 }

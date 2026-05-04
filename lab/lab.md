@@ -842,3 +842,253 @@ Notice how similar Steps 3 and 4 are. The only difference is which boolean leads
 The rule `INT-DESC-001` says "every interface must have a description configured." We need to find each interface block in the config, then check each block individually.
 
 A Cisco config interface block looks like this:
+
+```bash
+interface GigabitEthernet0/0
+description Uplink to ISP-A
+ip address 203.0.113.2 255.255.255.252
+no shutdown
+!
+```
+
+The interface "starts" at a line beginning with `interface ` and "ends" when we hit a non indented line, like `!` Lines belonging to the interface are indented with a leading space or tab.
+
+We need a helper function to parse the config into a dict of `{interface_name: [list_of_lines]}`. Then a rule handler that checks each interface for the needed field.
+
+---
+
+**Step 5: `parse_interfaces`**
+
+Find `parse_interfaces(config)`:
+
+```python
+def parse_interfaces(config):
+    #Module 4: Parse Cisco config into a dict of interface blocks
+    pass
+```
+
+This function:
+
+1. Initialize an empty dict `interfaces` and a tracking variable `current_iface = None`
+2. Loop through each line of the config (`config.splitlines()` returns a list of lines)
+3. If the line starts with `"interface "`, we've hit a new interface block, so we save its name as the current key and create an empty list for its lines
+4. Or if we're inside an interface (such as `current_iface` is not None) and the line starts with whitespace, add it to that interface's list
+5. If we're inside an interface and the line doesn't start with whitespace, we've left the block reset `current_iface` to `None`
+
+The `.startswith(...)` string method tests if a string begins with a given prefix. `.strip()` removes leading and trailing whitespace.
+
+**Try it yourself!** Add `parse_interfaces`. This is the most complex function in the lab so don't get discouraged! Utilize the reference/audit.py as needed!
+
+**Solution**
+
+```python
+def parse_interfaces(config):
+    interfaces = {}
+    current_iface = None
+
+    for line in config.splitlines():
+        if line.startswith("interface "):
+            current_iface = line.strip()
+            interfaces[current_iface] = []
+        elif current_iface is not None:
+            if line.startswith(" ") or line.startswith("\t"):
+                interfaces[current_iface].append(line.strip())
+            else:
+                current_iface = None
+
+    return interfaces
+```
+
+After running this on `router1.txt`, you'd get:
+
+```python
+{
+    "interface Loopback0": ["description Management Loopback", "ip address 10.255.0.1 ..."],
+    "interface GigabitEthernet0/0": ["description Uplink to ISP-A", "ip address ...", "no shutdown"],
+    ...
+}
+```
+
+---
+
+**Step 6: `check_every_interface_has`**
+
+Now the rule handler that uses `parse_interfaces`.
+
+How it should work:
+
+1. Get the required field name from `rule["field"]` (like `"description"`)
+2. Parse the config into interface blocks
+3. For each interface, check if any of its lines contain the required field
+4. If all interfaces have the field, PASS. If any don't, FAIL with the list of offending interfaces.
+
+Python's built-in `any()` function returns `True` if any element of an iterable is true. With a generator expression, you can check if any line in an interface contains the field:
+
+```python
+any(field in line for line in iface_lines)
+```
+
+This checks  `field in line` for each line and returns `True` as soon as any one is true.
+
+**Try it yourself!** Implement `check_every_int`. Track missing interfaces in a list, then return `PASS` or `FAIL` based on whether the list is empty.
+
+**Solution:**
+
+```python
+def check_every_int(rule, config):
+    field = rule["field"]
+    interfaces = parse_interfaces(config)
+
+    if not interfaces:
+        return ("PASS", "No interfaces found in config")
+
+    missing = []
+    for iface_name, iface_lines in interfaces.items():
+        if not any(field in line for line in iface_lines):
+            missing.append(iface_name)
+
+    if missing:
+        return ("FAIL", f"Missing '{field}' on: {', '.join(missing)}")
+    else:
+        return ("PASS", f"All {len(interfaces)} interfaces have '{field}'")
+```
+
+The `', '.join(missing)` part takes a list of strings and concatenates them with `, ` between each. So `["Gi0/0", "Gi0/1"]` becomes `"Gi0/0, Gi0/1"`.
+
+---
+
+**Part 4: The dispatch table**
+
+We have three handler functions. Now we need to wire them up so `evaluate_rule` calls the right one based on the rule's `type` field.
+
+The functional, but messy way to do this would be a long chain of `if`/`elif`:
+
+```python
+def evaluate_rule(rule, config):
+    if rule["type"] == "config_contains":
+        return check_config_contains(rule, config)
+    elif rule["type"] == "config_not_contains":
+        return check_config_not_contains(rule, config)
+    elif rule["type"] == "every_interface_has":
+        return check_every_interface_has(rule, config)
+    else:
+        return ("FAIL", f"Unknown rule type: {rule['type']}")
+```
+
+This works. But it has problems like:
+
+- Every new rule type means modifying `evaluate_rule`
+- The function grows linearly with the number of rule types
+- The dispatch logic is mixed with the function-calling logic
+
+A cleaner approach uses a dispatch table which is a dict mapping rule type strings to handler functions. In Python, functions are first-class values; you can put them in dicts:
+
+```python
+RULE_HANDLERS = {
+    "config_contains": check_config_contains,
+    "config_not_contains": check_config_not_contains,
+    "every_interface_has": check_every_interface_has,
+}
+```
+
+Then `evaluate_rule` becomes:
+
+```python
+def evaluate_rule(rule, config):
+    handler = RULE_HANDLERS.get(rule["type"])
+    if handler is None:
+        return ("FAIL", f"Unknown rule type: {rule['type']}")
+    return handler(rule, config)
+```
+
+This funtion uses four lines instead of nine and adding a new rule type means writing a new function and adding one line to the dispatch table. `evaluate_rule` itself never changes.
+
+---
+
+**Step 7: Build the dispatch table**
+
+Find the `rule_handler`
+
+```python
+rule_handler = {
+    #Module 4: Map rule type strings to handler functions
+}
+```
+
+**Try it yourself!** Add three entries mapping each rule type string to the matching handler function. **Don't include parentheses after the function names.** `check_config_contains` (without parens) is the function itself; `check_config_contains()` (with parens) would call it.
+
+**Solution**
+
+```python
+rule_handler = {
+    "config_contains": check_config_contains,
+    "config_not_contains": check_config_not_contains,
+    "every_interface_has": check_every_interface_has,
+}
+```
+
+---
+
+**Step 8: `evaluate_rule`**
+
+Find `evaluate_rule`:
+
+```python
+def evaluate_rule(rule, config):
+    #Module 4: Look up the right handler and call it
+    pass
+```
+
+Use `rule_handler.get(rule["type"])` to grab the handler. The `.get()` method returns `None` if the key isn't found, which lets us handle unknown rule types gracefully.
+
+**Try it yourself!** Add `evaluate_rule`.
+
+**Solution:**
+
+```python
+def evaluate_rule(rule, config):
+    handler = rule_handler.get(rule["type"])
+    if handler is None:
+        return ("FAIL", f"Unknown rule type: {rule['type']}")
+    return handler(rule, config)
+```
+
+---
+
+**Testing the engine**
+
+Update your test block:
+
+```python
+if __name__ == "__main__":
+    inventory = load_inventory("starter/inventory.yaml")
+    policy = load_policy("starter/policy.yaml")
+    config = load_config(inventory[0])  # router1's config
+
+    for rule in policy["rules"]:
+        if rule_applies(rule, inventory[0]):
+            status, reason = evaluate_rule(rule, config)
+            print(f"{rule['id']:15} | {status} | {reason}")
+        else:
+            print(f"{rule['id']:15} | N/A  | Does not apply")
+```
+
+Run the test block. For `router1`, you should see all five rules pass:
+
+```bash
+NTP-001         | PASS | Found pattern: ntp server 10.0.0.100
+TELNET-001      | PASS | Pattern correctly absent: transport input.*telnet
+SNMP-001        | PASS | Pattern correctly absent: snmp-server community (public|private)
+BANNER-001      | PASS | Found pattern: banner login
+INT-DESC-001    | PASS | All 4 interfaces have 'description'
+```
+
+---
+
+A common mistake is calling a function in the dispatch table. Make sure to not use parantheses in the dispatch table.
+
+**Module 4 Questions**
+
+1. Why does the dispatch table store function references instead of function calls? What's the difference?
+2. The `rule_applies` function uses `device.get(key)` instead of `device[key]`. What error would `device[key]` throw if the device doesn't have that field, and how does `.get()` avoid it?
+
