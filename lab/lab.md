@@ -1164,3 +1164,193 @@ def run_audit(inventory, policy):
 ```
 
 ---
+
+**Step 2: Load the device's config**
+
+Inside the loop, load the config using `load_config(device)`. Wrap it in `try/except` so if the config file doesn't exist, we want to record an ERROR for every rule on that device and skip to the next device.
+
+The `try/except` pattern looks like:
+
+```python
+try:
+    risky_operation()
+except SpecificError:
+    handle_failure()
+```
+
+For any missing files, the specific error is `FileNotFoundError`.
+
+When the file is missing, we still want the audit to produce results for that device and just marked as ERROR. Loop through every rule in `policy["rules"]` and add an error result for each, then use `continue` to jump to the next device.
+
+The `continue` keyword skips the rest of the loop body and starts the next iteration. Without `continue` we'd fall through and try to evaluate rules against a config that doesn't exist.
+
+**Try it yourself!** Wrap `load_config(device)` in `try/except FileNotFoundError`. In the except block, append an ERROR result for each rule, then `continue`.
+
+**Solution**
+
+```python
+def run_audit(inventory, policy):
+    results = []
+
+    for device in inventory:
+        try:
+            config = load_config(device)
+        except FileNotFoundError:
+            for rule in policy["rules"]:
+                results.append({
+                    "device": device["name"],
+                    "rule_id": rule["id"],
+                    "severity": rule["severity"],
+                    "status": "ERROR",
+                    "reason": f"Config file not found: {device['config_path']}",
+                })
+            continue
+
+    return results
+```
+
+---
+
+`run_audit` is now complete!
+
+---
+
+**Tuple unpacking**
+
+The line:
+
+```python
+status, reason = evaluate_rule(rule, config)
+```
+
+is called tuple unpacking. `evaluate_rule` returns a 2-tuple like `("PASS", "Found pattern: ...")`. Instead of writing:
+
+```python
+result = evaluate_rule(rule, config)
+status = result[0]
+reason = result[1]
+```
+
+we can unpack both values in one line. Python sees the comma on the left side and assigns positionally so the first element to `status`, second to `reason`.
+
+---
+
+**Testing `run_audit`**
+
+Your test block should now be:
+
+```python
+if __name__ == "__main__":
+    inventory = load_inventory("starter/inventory.yaml")
+    policy = load_policy("starter/policy.yaml")
+    results = run_audit(inventory, policy)
+
+    print(f"Total checks: {len(results)}")
+    print()
+    for r in results:
+        print(f"{r['device']:10} | {r['rule_id']:15} | {r['status']:5} | {r['reason']}")
+```
+
+Running that, you should see the following output:
+
+```bash
+Total checks: 15
+router1    | NTP-001         | PASS  | Found pattern: ntp server 10.0.0.100
+router1    | TELNET-001      | PASS  | Pattern correctly absent: transport input.*telnet
+router1    | SNMP-001        | PASS  | Pattern correctly absent: snmp-server community (public|private)
+router1    | BANNER-001      | PASS  | Found pattern: banner login
+router1    | INT-DESC-001    | PASS  | All 4 interfaces have 'description'
+switch1    | NTP-001         | PASS  | Found pattern: ntp server 10.0.0.100
+switch1    | TELNET-001      | FAIL  | Forbidden pattern found: transport input.*telnet
+```
+
+---
+
+To verify if the `FileNotFoundError` handling works, rename `router1.txt` to `router1_off.txt` and run the script. You should see `ERROR` for router1 and run normally for the other devices. Rename back to `router1.txt` after testing.
+
+A common mistake is forgetting `continue`. This can crash the program since Python won't know what to do with an error condition.
+
+**Module 5 Questions**
+
+1. What does the `continue` keyword do? Why do we need it after the `except` block in Step 2?
+
+2. Why does `run_audit` return a list of dicts rather than printing results directly? 
+
+---
+
+# Module 6: Reporting
+
+**Objectives:**
+
+- Use the `rich` library to render formatted output
+- Build a table dynamically from a list of dicts
+- Apply colors based on data values
+- Compute statistics
+- Wire everything together with a `main()` function and entry-point guard
+
+**Background**
+
+In Module 5 we made a list of result dicts. That list is correct, but raw and printing it as plain text isn't useful for an engineer scanning for failures. We want a real audit report that has a table with columns, color-coded statuses (green for `PASS`, red for `FAIL`), a header showing what policy was applied, and a summary line.
+
+Python's standard `print()` could do the job, but the result would be ugly and manually padding columns and computing widths is tedious. The `rich` library handles all of that automatically. It also supports inline color markup that works in any modern terminal.
+
+**How to use `rich`**
+
+Three things from `rich` are useful for us with this lab:
+
+- **`Console`** is the main object you print through. Anything you print with it gets `rich`'s formatting treatment.
+- **`Table`** handles column alignment, borders, and width calculation automatically. You add columns with `add_column` and rows with `add_row`.
+- **Inline markup tags** `rich` parses bracket tags in strings, similar to how HTML `[bold]hello[/bold]` renders as bold text. `[green]ok[/green]` renders green. Anything outside the tags renders normally.
+
+An example:
+
+```python
+from rich.console import Console
+from rich.table import Table
+
+console = Console()
+console.print("[bold]Audit Report[/bold]")
+
+table = Table()
+table.add_column("Name")
+table.add_column("Status")
+table.add_row("router1", "[green]PASS[/green]")
+table.add_row("router2", "[red]FAIL[/red]")
+console.print(table)
+```
+
+**Coloring by status**
+
+We want `PASS` rows green, `FAIL` rows red, `N/A` rows dim, and `ERROR` rows yellow.
+
+```python
+status_styles = {
+    "PASS": "green",
+    "FAIL": "red",
+    "N/A": "dim",
+    "ERROR": "yellow",
+}
+```
+
+When building each row, look up the style for the row's status and wrap the text in markup tags.
+
+**Writing `print_report()`**
+
+Open `starter/audit.py` and find the `print_report` function:
+
+```python
+def print_report(results, policy):
+    #Module 6: Render results as a colorized table
+    pass
+```
+
+Make sure your imports at the top of the file include:
+
+```python
+from rich.console import Console
+from rich.table import Table
+```
+
+We'll build the function in five steps.
+
+---
