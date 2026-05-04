@@ -764,3 +764,81 @@ def rule_applies(role, device):
   return True
 ```
 ---
+
+**Part 2: Rule handlers**
+
+Now we will write the functions that evaluate each type of rule. Those include `config_contains`, `config_not_contains`, and `every_interface_has`. Each handler takes a rule and a config string, and returns a tuple of `(status, reason)` where status is `"PASS"` or `"FAIL"` and reason is a human readable string.
+
+**Why a tuple?** Because the audit report needs both pieces. Status drives the pass/fail count and the color in the table we will build later.
+
+---
+
+**Step 3: `check_config_contains`**
+
+This handler will `PASS`  if the pattern is found in the config, `FAIL` if not..
+
+We already`search_config` from Module 3. The handler just calls `search_config` and translates the boolean result into a `(status, reason)` tuple.
+
+Look at `check_config_contains`:
+
+```python
+def check_config_contains(rule, config):
+    #Module 4: PASS if pattern found in config
+    pass
+```
+
+To get values from the rule dict:
+- `rule["pattern"]` the pattern to search for
+- `rule.get("match_type", "exact")` match type, defaulting to "exact" if not specified
+
+Then call `search_config(config, pattern, match_type)` to get a boolean. If `True`, return PASS if `False`, return FAIL.
+
+**Try it yourself!** Add the handler. Use clear reason strings like `"Found pattern: <pattern>"` or `"Pattern not found: <pattern>"`.
+
+**Solution**
+
+```python
+def check_config_contains(rule, config):
+    pattern = rule["pattern"]
+    match_type = rule.get("match_type", "exact")
+    found = search_config(config, pattern, match_type)
+
+    if found:
+        return ("PASS", f"Found pattern: {pattern}")
+    else:
+        return ("FAIL", f"Pattern not found: {pattern}")
+```
+
+---
+
+**Step 4: `check_config_not_contains`**
+
+Inverse of Step 3. PASSes if the pattern is absent, FAILs if it's present.
+
+Same logic, but the meaning of `found` is flipped where finding the pattern means the rule was violated.
+
+**Try it yourself!** Add `check_config_not_contains`. Reason strings like `"Forbidden pattern found: <pattern>"` (FAIL) and `"Pattern correctly absent: <pattern>"` (PASS) read well in reports.
+
+**Solution**
+
+```python
+def check_config_not_contains(rule, config):
+    pattern = rule["pattern"]
+    match_type = rule.get("match_type", "exact")
+    found = search_config(config, pattern, match_type)
+
+    if found:
+        return ("FAIL", f"Forbidden pattern found: {pattern}")
+    else:
+        return ("PASS", f"Pattern correctly absent: {pattern}")
+```
+
+Notice how similar Steps 3 and 4 are. The only difference is which boolean leads to which status. Handlers are predictable.
+
+---
+
+**Part 3: Interface-level checks**
+
+The rule `INT-DESC-001` says "every interface must have a description configured." We need to find each interface block in the config, then check each block individually.
+
+A Cisco config interface block looks like this:
