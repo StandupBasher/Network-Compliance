@@ -1092,3 +1092,56 @@ A common mistake is calling a function in the dispatch table. Make sure to not u
 1. Why does the dispatch table store function references instead of function calls? What's the difference?
 2. The `rule_applies` function uses `device.get(key)` instead of `device[key]`. What error would `device[key]` throw if the device doesn't have that field, and how does `.get()` avoid it?
 
+# Module 5: Running the Audit
+
+**Objectives:**
+
+- Loop over multiple devices and rules
+- Gather results in a list of dicts
+- Handle errors with try/except so one failure doesn't kill the audit engine
+- Use the `continue` keyword to skip iterations
+
+**Background**
+
+In Module 4 we built the rule engine, where given one rule and one config, it returns a result. `run_audit` loops over every device, loads each config, and evaluates every applicable rule. The output is a list of result dicts that the reporting module (Module 6) will render as a table.
+
+The function has to handle three cases per (device, rule) pair:
+
+1. The rule applies and evaluates to PASS or FAIL and records the result
+2. The rule doesn't apply to this device and records N/A
+3. The device's config file is missing and records ERROR for every rule on that device
+
+We'll use Python's `try/except` to catch the missing file case, and the `continue` keyword to skip iterations.
+
+**Building the result structure**
+
+Each result is a dict with five fields:
+
+```python
+{
+    "device": "router1",
+    "rule_id": "NTP-001",
+    "severity": "high",
+    "status": "PASS",
+    "reason": "Found pattern: ntp server 10.0.0.100"
+}
+```
+
+Why are we using a list of dicts and not a list of tuples? Because dicts are self documenting. `result["status"]` reads more clearly than `result[3]`. When the reporting module renders the table, it accesses fields by name, which makes it much harder to introduce position bugs.
+
+**Writing `run_audit()`**
+
+Open `starter/audit.py` and find the `run_audit` function:
+
+```python
+def run_audit(inventory, policy):
+    #Module 5: Run every rule against every device, collect results
+    pass
+```
+
+The function takes the inventory list (from Module 1) and the policy dict (from Module 1). It returns a list of result dicts.
+
+We'll build it in four steps.
+
+---
+
