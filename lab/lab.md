@@ -1434,3 +1434,87 @@ console.print(table)
 
 ---
 
+**Step 4: Add the summary line**
+
+Under the table, print a one line summary with counts of each status. We compute the counts using generator expressions like:
+
+```python
+passed = sum(1 for r in results if r["status"] == "PASS")
+```
+
+This generates a `1` for each result with status `"PASS"` and sums them. This is equal to `len([r for r in results if r["status"] == "PASS"])` but doesn't build an intermediate list. 
+
+**Try it yourself!** Compute the four counts and print a summary like `"Summary: 15 checks - 8 pass, 7 fail, 0 skipped, 0 errored"` with color tags around the numbers.
+
+**Solution:**
+
+```python
+total = len(results)
+passed = sum(1 for r in results if r["status"] == "PASS")
+failed = sum(1 for r in results if r["status"] == "FAIL")
+skipped = sum(1 for r in results if r["status"] == "N/A")
+errored = sum(1 for r in results if r["status"] == "ERROR")
+
+console.print()
+console.print(f"[bold]Summary:[/bold] {total} checks - "
+              f"[green]{passed} pass[/green], "
+              f"[red]{failed} fail[/red], "
+              f"[dim]{skipped} skipped[/dim], "
+              f"[yellow]{errored} errored[/yellow]")
+console.print()
+```
+
+Notice the multi line f string. Python automatically concatenates adjacent string literals on the same line so these four `f"..."` strings become one big string at runtime.
+
+---
+
+**Step 5: The `main()` function and entry point**
+
+The `main()` function puts together the whole program, with the functions  load inventory, load policy, run audit, and print report.
+
+Find the `main` fnction:
+
+```python
+def main():
+    inventory = load_inventory("starter/inventory.yaml")
+    policy = load_policy("starter/policy.yaml")
+    results = run_audit(inventory, policy)
+    print_report(results, policy)
+
+
+if __name__ == "__main__":
+    main()
+```
+
+---
+
+**Final test**
+
+Run the complete script:
+
+```bash
+python starter/audit.py
+```
+
+You should see a colorized table. 
+
+--- 
+
+**Module 5 Questions**
+
+1. The `status_styles` dict lives at module level, not inside `print_report`. Why?
+2. Why use `rich` instead of just printing with regular `print()` calls?
+
+---
+
+# Next steps
+
+You've built a working tool. Some next steps to grow the program:
+
+- **Live device support.** Replace the file-based `load_config` with a Netmiko version that pulls configs over SSH.
+- **More rule types.** Add `interface_count_at_least`, `ips_in_range`. Each one is a new function and a new entry in the dispatch table.
+- **HTML or JSON output.** Write a new `render_report_html(results, policy)` function that produces a styled HTML file instead of terminal output.
+- **Rule parameterization.** Currently rules are static. Imagine parameters like `{ntp_server}` that get substituted from a per-site configuration before evaluation.
+- **CI integration.** Run the audit on every config commit using GitHub Actions or GitLab CI. Auto-fail merges that introduce non-compliant configs.
+
+---
