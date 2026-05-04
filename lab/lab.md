@@ -1145,3 +1145,22 @@ We'll build it in four steps.
 
 ---
 
+**Step 1: Set up the outer loop**
+
+Start by creating an empty results list, then loop over each device.
+
+**Try it yourself!** Inside `run_audit`, create an empty list named `results`, then write a `for` loop that iterates over `inventory`. We can leave the body of the loop empty.
+
+**Solution**
+
+```python
+def run_audit(inventory, policy):
+    results = []
+
+    for device in inventory:
+        pass
+
+    return results
+```
+
+---
