@@ -1389,7 +1389,7 @@ The `add_column` method accepts options. `style="cyan"` colors the entire column
 
 **Try it yourself** Create a table named `table` with five columns. Make the Device column cyan and prevent wrapping on the first four columns
 
-**Solution:**
+**Solution**
 
 ```python
 table = Table(show_lines=False)
@@ -1401,6 +1401,36 @@ table.add_column("Reason")
 ```
 
 `show_lines=False` makes a cleaner table without horizontal lines between every row.
+
+---
+
+**Step 3: Add a row per result**
+
+Loop through the results list. For each result, look up the style based on the status and add a row.
+
+To look up the style, use `style = status_styles.get(r["status"], "white")`. The second argument to `.get()` is a default so if the status isn't in the dict, fall back to white.
+
+The status cell wraps the status text in color markup: `f"[{style}]{r['status']}[/{style}]"`. For example this `"[green]PASS[/green]"` makes green.
+
+For severity, uppercase it for visual emphasis: `r["severity"].upper()`.
+
+**Try it yourself!** Loop through `results` and call `table.add_row` for each one. Build the Status cell with color markup based on `status_styles`.
+
+**Solution**
+
+```python
+for r in results:
+    style = status_styles.get(r["status"], "white")
+    table.add_row(
+        r["device"],
+        r["rule_id"],
+        r["severity"].upper(),
+        f"[{style}]{r['status']}[/{style}]",
+        r["reason"],
+    )
+
+console.print(table)
+```
 
 ---
 
