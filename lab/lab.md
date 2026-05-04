@@ -728,3 +728,40 @@ def rule_applies(rule, device):
 
 ---
 
+---
+
+**Step 2: Check each condition**
+
+We need to make sure that each key/value in `applies_to` matches the device.
+
+For example, if the rule says:
+
+```yaml
+applies_to:
+  role: edge
+  site: DC
+```
+
+then the device must have `role: edge` AND `site: DC`. If either don't match, the rule doesn't apply.
+
+Loop through `rule["applies_to"]`. For each `key, value` pair, compare to `device.get(key)`. We use `.get()` instead of `[]` because if the device doesn't have that field at all, `.get()` returns `None` instead of crashing.
+
+If a comparison fails, return `False`. If a full loop is completed, then all conditions matched, so return `True`.
+
+**Try it yourself!** Add a `for` loop after your Step 1 code that iterates `rule["applies_to"].items()`. Inside the loop, return `False` if `device.get(key) != value`. After the loop, return `True`
+
+**Solution**
+
+```python
+def rule_applies(role, device):
+  if "applies_to" not in rule:
+    return True
+
+  for key, value in rule["applies_to"].items():
+    if device.get(key) != value:
+      return false
+  
+  return True
+---
+
+---
