@@ -711,3 +711,20 @@ The logic is:
 
 If `"applies_to"` isn't a key in the rule dict, the rule applies globally. We can check this with the `in` operator:
 
+```python
+"applies_to" in role #True if the key exists
+"applies_to" not in role #True if the key doesn't exist
+```
+
+**Try it yourself!** Inside `rule_applies`, return `True` if `applies_to` is not in `rule`
+
+**Solution**
+
+```python
+def rule_applies(rule, device):
+  if "applies_to" not in rule:
+    return True
+```
+
+---
+
