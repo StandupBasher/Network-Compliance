@@ -671,3 +671,43 @@ We'll build it in five pieces:
 5. The dispatch table and `evaluate_rule` Putting the pieces together
 
 ---
+
+**Part 1: Rule applicability**
+
+Some rules apply to every device. Others only apply to specific roles or sites. For example, a "WAN ACL must be present" rule only makes sense for edge routers, not core switches.
+
+Look at this rule, which has an `applies_to` field:
+
+```yaml
+- id: WAN-ACL-001
+  description: Edge routers must have inbound ACLs
+  type: config_contains
+  pattern: "ip access-group WAN_IN in"
+  severity: critical
+  applies_to:
+    role: edge
+```
+
+This rule should only run on devices where the `role == "edge`. For devices in any other role, it should be skipped.
+
+Open `starter/audit.py` and find rule_applies(rule, device):
+
+```python
+def rule_applies(rule, device):
+    #Module 4: Determine if a rull should apply against a given device
+    #Return True if no applies_to, otherwise check each key/value
+    pass
+```
+
+---
+
+The logic is:
+- If the rule has no `applies_to` field, it applies to everything and will return `True`
+- If the rule has an `applies_to` field, every key/value pair in it must match the device's corresponding fields and will return `True` if all match, `False` if any don't
+
+---
+
+**Step 1: Handle the no `applies_to` case**
+
+If `"applies_to"` isn't a key in the rule dict, the rule applies globally. We can check this with the `in` operator:
+
