@@ -762,6 +762,5 @@ def rule_applies(role, device):
       return false
   
   return True
----
-
+```
 ---
